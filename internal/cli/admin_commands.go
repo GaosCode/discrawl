@@ -12,6 +12,7 @@ import (
 
 	"github.com/steipete/discrawl/internal/config"
 	"github.com/steipete/discrawl/internal/discord"
+	"github.com/steipete/discrawl/internal/embed"
 	"github.com/steipete/discrawl/internal/store"
 	"github.com/steipete/discrawl/internal/syncer"
 )
@@ -177,6 +178,21 @@ func (r *runtime) runDoctor(args []string) error {
 	}
 	report["config"] = "ok"
 	report["default_guild_id"] = cfg.EffectiveDefaultGuildID()
+	if cfg.Search.Embeddings.Enabled {
+		check := embed.CheckProvider(r.ctx, cfg.Search.Embeddings)
+		report["embeddings"] = check.Status
+		report["embeddings_provider"] = check.Provider
+		report["embeddings_model"] = check.Model
+		report["embeddings_base_url"] = check.BaseURL
+		if check.Probed {
+			report["embeddings_probe"] = "ok"
+		}
+		if check.Warning != "" {
+			report["embeddings_warning"] = check.Warning
+		}
+	} else {
+		report["embeddings"] = "disabled"
+	}
 	token, err := config.ResolveDiscordToken(cfg)
 	if err != nil {
 		report["discord_token"] = err.Error()
